@@ -1,0 +1,85 @@
+/*
+ * @Author: Liu Sainan
+ * @Date: 2024-01-28 01:12:38
+ */
+
+package middleware
+
+import (
+	"fmt"
+	"myadmin/internal/config"
+	"myadmin/internal/model"
+
+	"github.com/gin-gonic/gin"
+)
+
+func ParseUser(c *gin.Context) (user model.User, err error) {
+
+	v, ok := c.Get(config.GinCtxUserKey)
+	if !ok {
+		return model.User{}, fmt.Errorf("未找到用户信息")
+	}
+
+	switch user := v.(type) {
+	case nil:
+		return model.User{}, fmt.Errorf("未找到用户信息")
+	case model.User:
+		return user, nil
+	default:
+		return model.User{}, fmt.Errorf("解析用户信息失败")
+	}
+}
+
+// 必须是管理员
+func AdminRequired(c *gin.Context) {
+	var user model.User
+	var err error
+	if user, err = ParseUser(c); err != nil {
+		c.JSON(401, gin.H{"code": 401, "message": err.Error()})
+		c.Abort()
+		return
+	}
+
+	if user.Role == model.UserRoleAdmin || user.Role == model.UserRoleSeniorAdmin || user.Role == model.UserRoleRoot {
+		c.Next()
+	} else {
+		c.JSON(401, gin.H{"code": 401, "message": "权限不足"})
+		c.Abort()
+		return
+	}
+}
+
+// 必须root管理员
+func RootRequired(c *gin.Context) {
+	var user model.User
+	var err error
+	if user, err = ParseUser(c); err != nil {
+		c.JSON(401, gin.H{"code": 401, "message": err.Error()})
+		c.Abort()
+		return
+	}
+
+	if user.Role == model.UserRoleRoot {
+		c.Next()
+	} else {
+		c.JSON(401, gin.H{"code": 401, "message": "权限不足"})
+		c.Abort()
+		return
+	}
+}
+
+// 必须root管理员或所属ID与当前用户一致
+func RootOrOwnerRequired(c *gin.Context, userid uint) error {
+	var user model.User
+	var err error
+
+	if user, err = ParseUser(c); err != nil {
+		return err
+	}
+
+	if user.Role == model.UserRoleRoot || user.ID == userid {
+		return nil
+	}
+
+	return fmt.Errorf("权限不足!")
+}

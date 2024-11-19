@@ -1,0 +1,113 @@
+
+### 测试注册
+POST http://10.57.95.125:8866/api/v1/myadmin/auth/user/register HTTP/1.1
+content-type: application/json
+
+{
+    "username": "testuser008",
+    "name": "测试用户008",
+    "password": "abcde12348",
+    "phone": "12345678908",
+    "email": "12345678908@test.cn"
+}
+
+### 测试登录
+POST http://10.57.95.125:8866/api/v1/myadmin/auth/user/login HTTP/1.1
+content-type: application/json
+
+{
+    "username": "testuser008",
+    "password": "abcde12348"
+}
+
+### 请求 info 接口
+POST http://10.57.95.125:8866/api/v1/myadmin/auth/user/info HTTP/1.1
+content-type: application/json
+# 以下两种方式都可以通过 token 认证
+MYADMIN-X-TOKEN: eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MDc3NDAwMzksIm5hbWUiOiJhY2Nlc3NUb2tlbiIsInN1YiI6NX0.hRgmrG-Wbk6mRhm4kVawI1rxmdmGXFsd3MRjZmNI-KQoZMX_bsrPr1wBt6byN2Kyun01CGZlHFtEXLoc2vDSrw
+# Authorization: MYADMIN-X-TOKEN eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MDYzODUzMDEsIm9yaWdfaWF0IjoxNzA1NzgwNTAxLCJ1aWQiOjF9.wR6lF4DRGeVcjXBCJsEJz3mo2t-pcoGNYqgcpQi3OhU
+# Cookie: MYADMIN-X-TOKEN=eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MDc3NDAwMzksIm5hbWUiOiJhY2Nlc3NUb2tlbiIsInN1YiI6NX0.hRgmrG-Wbk6mRhm4kVawI1rxmdmGXFsd3MRjZmNI-KQoZMX_bsrPr1wBt6byN2Kyun01CGZlHFtEXLoc2vDSrw
+
+### 请求 users 接口
+POST http://10.57.95.125:8866/api/v1/myadmin/auth/users HTTP/1.1
+content-type: application/json
+# 以下两种方式都可以通过 token 认证
+MYADMIN-X-TOKEN: eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MDc4MDc4NjMsIm5hbWUiOiJhY2Nlc3NUb2tlbiIsInN1YiI6NX0._qTHJUPzAOQAIsEMbFmw23JFHLShcaGKOJHj8oar12YWl07IGJ8vS0JSd39pfLv2c0Ts2hkIgnd4jDmUyeOdWw
+
+{
+    "search": "",
+    "page": 1,
+    "limit": 10
+}
+
+### 请求 update 接口
+POST http://10.57.95.125:8866/api/v1/myadmin/auth/user/update HTTP/1.1
+content-type: application/json
+# 以下两种方式都可以通过 token 认证
+MYADMIN-X-TOKEN: eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MDc4MDc4NjMsIm5hbWUiOiJhY2Nlc3NUb2tlbiIsInN1YiI6NX0._qTHJUPzAOQAIsEMbFmw23JFHLShcaGKOJHj8oar12YWl07IGJ8vS0JSd39pfLv2c0Ts2hkIgnd4jDmUyeOdWw
+
+{
+    "id": 1,
+    "username": "testuser002",
+    "name": "测试用户009",
+    "phone": "12345678902",
+    "email": "12345678902@test.cn",
+    "gender": 0,
+    "avatar_url": "https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif",
+    "role": 30,
+    "status": 0,
+    "signature": "",
+    "introduce": "",
+    "created_at": "2024-01-27T16:14:25.017Z",
+    "update_at": "2024-01-27T16:14:25.017Z"
+}
+
+
+### 请求 password/update 接口
+POST http://10.57.95.125:8866/api/v1/myadmin/auth/user/password/update HTTP/1.1
+content-type: application/json
+# 以下两种方式都可以通过 token 认证
+Authorization: MYADMIN-X-TOKEN eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MDY5OTE5NDQsIm9yaWdfaWF0IjoxNzA2Mzg3MTQ0LCJ1aWQiOjJ9.jcENZ5xcel62NG_KYeYRPHEAdvof5bJmIsgx14FGkqU
+
+{
+    "password": "abc123",
+    "new_password": "abc456",
+    "confirm_password": "abc456"
+}
+
+### 请求 password/reset 接口
+POST http://10.57.95.125:8866/api/v1/myadmin/auth/user/password/reset HTTP/1.1
+content-type: application/json
+# 以下两种方式都可以通过 token 认证
+Authorization: MYADMIN-X-TOKEN eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MDY5OTI2NjAsIm9yaWdfaWF0IjoxNzA2Mzg3ODYwLCJ1aWQiOjJ9.5G-J7Y0JnGbmWoqPcEPJxAPTWDaRfm0j8AW8NtVY-3c
+
+{
+    "id": 1,
+    "username": "testuser002",
+    "name": "测试用户009",
+    "phone": "12345678902",
+    "email": "12345678902@test.cn",
+    "gender": 0,
+    "avatar_url": "https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif",
+    "role": 30,
+    "status": 0
+}
+
+### 测试退出
+POST http://10.57.95.125:8866/api/v1/myadmin/auth/user/logout HTTP/1.1
+content-type: application/json
+Authorization: MYADMIN-X-TOKEN eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MDY5OTI2NjAsIm9yaWdfaWF0IjoxNzA2Mzg3ODYwLCJ1aWQiOjJ9.5G-J7Y0JnGbmWoqPcEPJxAPTWDaRfm0j8AW8NtVY-3c
+
+### 测试刷新token
+POST http://10.57.95.125:8866/api/v1/myadmin/auth/user/refresh-token HTTP/1.1
+content-type: application/json
+# Authorization: MYADMIN-X-TOKEN eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MDc4MDc4NjMsIm5hbWUiOiJhY2Nlc3NUb2tlbiIsInN1YiI6NX0._qTHJUPzAOQAIsEMbFmw23JFHLShcaGKOJHj8oar12YWl07IGJ8vS0JSd39pfLv2c0Ts2hkIgnd4jDmUyeOdWw
+
+{
+    "refreshToken": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3NfdWlkIjo1LCJleHAiOjE3MDg0MTI2NjMsIm5hbWUiOiJyZWZyZXNoVG9rZW4iLCJzdWIiOi0xfQ.d6lk5qupkmWxm1s2ppThEld1HrPWKPeGACLxvhAi7Bgpsk2GZRRwdb_Z4CaKpBu7Q1ZYvG6IaPcareMKwwzkVA"
+}
+
+
+### 测试异步路由
+POST http://10.57.95.125:8866/api/v1/myadmin/route/getAsyncRoutes HTTP/1.1
+content-type: application/json

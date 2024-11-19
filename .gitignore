@@ -1,0 +1,36 @@
+/tmp
+/main
+/server
+/agent
+
+#golang
+/bin/
+log/
+logs/
+
+.vscode
+
+#python:
+venv/
+.venv/
+*.py[cod]
+*.so
+*.egg
+*.egg-info
+
+#javascript npm vue
+/web/node_modules/
+/dist/
+
+#package file:
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+
+
+#Other
+*.swp
+*.swo

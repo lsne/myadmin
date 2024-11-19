@@ -1,0 +1,73 @@
+# server 配置文件
+[server]
+Env                 = "production"         # 模式(开发，测试，产品)(development,test,production)
+Port                = 8866                 # go监听的端口
+CpuNum              = 8                    # api进程允许使用的服务器cpu核数
+TokenMaxAge         = 604800               # token多久过期，单位秒
+LogFile             = ""                   # 日志文件所在的目录，如果不设的话，默认在项目目录下
+LogLevel            = 0                     # 日志级别: {Debug: -1, Info: 0, WarnLevel: 1, ErrorLevel: 2, DPanicLevel: 3,  PanicLevel: 4, FatalLevel: 5}
+APIPrefix           = "/api/v2/myadmin"    # api服务请求前缀
+SiteName            = "后台管理系统"         # 网站名称
+Host                = "dev.dbm.com"        # 网站域名
+SshUser             = "ls"                 # 远程ssh用户
+SshPassword         = "xxxx"               # 远程ssh密码
+MailScript          = ""                   # 发送mail邮件的脚本现在这个参数也没有用了.改用localhost=25 smtp申请邮箱加白
+MailUser            = ""                   # 域名邮箱账号
+MailPass            = ""                   # 域名邮箱密码之前是想调用python脚本实现exchange发邮件现在不用了
+MailHost            = "localhost"          # smtp邮箱域名
+MailPort            = 25                   # smtp邮箱端口
+MailFrom            = "xxxx@xx.cn"         # 邮件来源
+TokenSecret         = "ndbmv2"             # TokenSecret，请修改
+PassSalt            = "ndbmv2pass"         # 用户密码加盐，请修改
+APIPoweredBy        = "DBMS API"           # 后台go加的X-Powered-By
+StatsEnabled        = false                # 是否开启数据统计功能 开启的话要安装mongodb
+CrawlerName         = "超级苦工"            # 爬虫账号名
+
+# 本 myadmin 部分的以下8个参数好像用不到先留着
+# ImgHost             = "dev.img.com"        # 图片服务器域名     #如果要修改上传路径的话，请使用绝对路径，不要使用相对路径 并在Nginx配置中，将修改后的目录配置为静态目录
+# UploadImgDir        = ""                   # 图片上传的目录 默认是/website/static/upload/img目录其实这一块没做~~
+# ImgPath             = "/upload/img"        # 上传后的图片请求地址前缀
+# MaxMultipartMemory  = 6                    # 上传的图片最大允许的大小，单位MB
+# LuosimaoVerifyURL   = ""                   # 螺丝帽验证地址咱们好像不需要人机验证好像
+# LuosimaoAPIKey      = ""                   # 螺丝帽api_key
+#
+# [statsd]
+# URL                 = ""                    # statsd服务连接地址，如127.0.0.1:8125
+# Prefix              = ""                    # statsd客户端前缀，可留空
+
+[cors]
+AllowOrigins        = ["http://localhost:8865","http://localhost:8864","http://10.209.32.135:80","http://10.209.32.135","http://localhost:80"]
+AllowMethods        = ["PUT","PATCH","GET","POST","DELETE","OPTIONS"]
+AllowHeaders        = ["content-type","x-token","Origin","x-requested-with"]
+ExposeHeaders       = ["X-Total-Count"]
+AllowCredentials    =  true
+
+[db.default]
+Dialect           = "mysql"
+Host              = "1.1.1.1"
+Port              = 3306
+User              = "lsne"
+Password          = "xxxxxxxxx"
+Database          = "myadmin"
+Charset           = "utf8mb4"
+MaxIdleConns      = 5
+MaxOpenConns      = 10
+
+[redis.default]
+Host              = "2.2.2.2"
+Port              = 8832
+Password          = "xxxxxxxxxxxxxxxxxxx"
+MaxIdle           = 3
+MaxActive         = 5
+
+[mongodb.default]
+URL               = "mongodb://mongo:xxxxxxxxxxxxxx@210.208.68.80=7384210.208.66.36=7384/dbm?replicaSet=replSet1"
+Hosts              = "3.3.3.3"
+AuthDB            = "myadmin"
+User              = "lsne"
+Password          = "xxxxxxxxx"
+Database          = "myadmin"
+ReplSet           = "replSet1"
+#Charset           = "utf8mb4"
+#MaxIdleConns      = 5
+#MaxOpenConns      = 10

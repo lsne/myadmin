@@ -1,0 +1,73 @@
+/*
+ * @Author: Liu Sainan
+ * @Date: 2023-12-07 13:26:12
+ */
+
+package cmd
+
+import (
+	"fmt"
+
+	"github.com/spf13/cobra"
+	"gopkg.in/go-playground/validator.v8"
+)
+
+func loginCmd() *cobra.Command {
+	var option string
+	cmd := &cobra.Command{
+		Use:   "login",
+		Short: "mongodb 单机版安装",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return environment.MustRoot()
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if option.Username == "" || option.Password == "" {
+				return fmt.Errorf("请指定 MongoDB 的超级管理员用户名和密码")
+			}
+			if err := utils.CheckPasswordLever(option.Password); err != nil {
+				return err
+			}
+			if err := option.CheckSpecialChar(); err != nil {
+				return err
+			}
+
+			option.InitArgs()
+			validate := validator.New()
+			if err := validate.RegisterValidation("ipPort", config.ValidateIPPort); err != nil {
+				return err
+			}
+			if err := validate.Struct(option); err != nil {
+				return err
+			}
+
+			rs := service.NewMongoDBInstall(&option)
+			if err := rs.CheckEnv(); err != nil {
+				return err
+			}
+
+			if onlyCheck {
+				return nil
+			}
+
+			return rs.Run()
+		},
+	}
+	cmd.Flags().StringVar(&option.SystemUser, "system-user", config.DefaultMongoDBSystemUser, "mongodb安装的操作系统用户")
+	cmd.Flags().StringVar(&option.SystemGroup, "system-group", config.DefaultMongoDBSystemGroup, "mongodb安装的操作系统用户组")
+	cmd.Flags().IntVarP(&option.Port, "port", "P", 0, "mongodb 数据库监听端口")
+	cmd.Flags().StringVarP(&option.Dir, "dir", "d", "", "mongodb安装目录, 默认: /opt/mongodb$PORT")
+	cmd.Flags().StringVarP(&option.Username, "username", "u", "", "mongodb用户名")
+	cmd.Flags().StringVarP(&option.Password, "password", "p", "", fmt.Sprintf("指定 MongoDB 用户密码, 建议使用: %s", utils.GeneratePasswd(16)))
+	cmd.Flags().IntVarP(&option.Memory, "memory", "m", 1, "内存")
+	cmd.Flags().StringVarP(&option.ReplSetName, "replSetName", "r", "", "副本集名")
+	cmd.Flags().BoolVar(&option.Arbiter, "arbiter", false, "是否为仲裁节点")
+	cmd.Flags().BoolVar(&option.Ipv6, "ipv6", false, "是否开启IPV6功能,默认不开启")
+	cmd.Flags().StringVarP(&option.BindIP, "bind-ip", "b", "", "mongodb 数据库监听地址")
+	cmd.Flags().StringVarP(&option.Join, "join", "j", "", "做为从库, 要加入的副本集群的任意一个节点<IP:PORT>")
+	cmd.Flags().StringVarP(&option.Owner, "owner", "o", "", "当机器上有多个IP时, 指定以哪个IP创建实例")
+	cmd.Flags().StringVar(&option.ResourceLimit, "resource-limit", "", "资源限制清单, 通过执行 systemctl set-property 实现. 例: --resource-limit='MemoryLimit=512M CPUShares=500'")
+	cmd.Flags().BoolVarP(&option.Yes, "yes", "y", false, "直接安装, 否则需要交互确认")
+	cmd.Flags().BoolVarP(&option.NoRollback, "no-rollback", "n", false, "安装失败不回滚")
+	cmd.Flags().BoolVar(&onlyCheck, "only-check", false, "只检查配置和环境, 不进行实际安装操作")
+	return cmd
+}

@@ -1,0 +1,155 @@
+[server]
+name = "我的后台管理系统"
+env = "prod"
+http_listen_address = ":8866"
+read_header_timeout = 10           # 单位: 秒
+read_timeout = 20                  # 单位: 秒
+write_timeout = 20                 # 单位: 秒
+max_header_bytes = 1               # 单位: MB
+grpc_listen_address = ":6688"
+api_url_prefix = "/api/v1/myadmin"
+use_https = false
+cert_file = ""
+key_file = ""
+auto_create_table = 0            # 自动创建表或更新表结构, 不自动创建(-1), 如果库为空则创建(0), 如果有不存在的表, 则只创建不存在的表, 现有的表保持不变存(1), 只要启动程序就同步表到数据库(2) 
+use_redis = false
+redis_login_user_prefix = "myadmin_user_"
+
+
+[auth]
+token_name = "MYADMIN-X-TOKEN"
+token_max_age = 604800
+token_secret = "mhy.as7_admintok.qayunsecdyy6bacexx_.ph"
+password_salt = "mssyf0add3d.min4user_qa4y9unp5asdbaxx.sa_ltceph"
+
+[cors]
+AllowOrigins = ["http://localhost:8865", "http://localhost:8864"]
+AllowMethods = ["PUT", "PATCH", "GET", "POST", "DELETE", "OPTIONS"]
+AllowHeaders = ["content-type", "x-token", "Origin", "x-requested-with"]
+ExposeHeaders = ["X-Total-Count"]
+AllowCredentials = true
+
+[image]
+# 目前只有头像图片相关
+# 图片服务器域名     #如果要修改上传路径的话，请使用绝对路径，不要使用相对路径 并在Nginx配置中，将修改后的目录配置为静态目录
+host = "dev.img.com"
+# 图片上传的目录, 根据业务再细分, 比如头像相关放到: /images/avatar/
+path = "/images"
+# 上传的图片最大允许的大小，单位MB
+max_size_mb = 64
+
+[statsd]
+# 是否开启数据统计功能 开启的话要安装mongodb
+stats_enabled = false
+# statsd服务连接地址，如 127.0.0.1:8125
+URL = ""
+# statsd客户端前缀，可留空
+prefix = ""
+
+[crawler]
+# 爬虫账号名
+crawler_name = "超级苦工"
+
+[robot]
+# 人机验证相关
+# 螺丝帽验证地址咱们好像不需要人机验证好像
+luosimao_verify_url = ""
+# 螺丝帽api_key
+luosimao_api_key = ""
+
+[logger]
+# 日志文件路径
+file_path = "./logs/myadmin.log"
+# 日志级别: {Debug: -1, Info: 0, WarnLevel: 1, ErrorLevel: 2, DPanicLevel: 3,  PanicLevel: 4, FatalLevel: 5}
+level = 0
+# json | text, default json
+formatter = "json"
+# 最大保留的备份数
+max_backups = 20
+# 日志最大保留天数
+max_age = 30
+# 文件最大大小(mb)
+max_size = 500
+# 是否开启压缩
+compress = true
+
+[mail]
+server = ""
+port = 25
+sender = ""
+username = ""
+password = ""
+script = ""
+
+[ssh]
+username = "ls"
+password = "xxxx"
+
+[db.default]
+# 如果 URI 不为空, 则只使用 URI, 不会使用URI之外的任何参数值, 所有属性都需手动写到 URI字符串中
+# 如果 URI 为空, 则使用 host, port, username 等参数 
+# URI = "mysql://username:password@host:port/database"
+# URI = "postgres://%s:%s@%s/%s?sslmode=disable&connect_timeout=3&target_session_attrs=read-write"
+Dialect = "mysql"       # mysql, postgres
+URI = ""
+host = "127.0.0.1:3306" # postgres 高可用模式可写成: "192.168.0.1:5432,192.168.0.2:5432"
+username = "myadmin"
+password = "myadmin"
+database = "myadmin"
+charset = "utf8mb4"
+max_idle_conns = 5
+max_open_conns = 10
+max_lifetime = 60       # 单位: 秒, 连接空闲保持时间
+parse_time = "True"     # MySQL 参数
+loc = "Local"           # MySQL 参数
+connect_timeout = 10    # postgres 参数, 尝试连接到 pgsql 库时的等待时间。 时间到了还没连接成功则报错
+sslmode = "disable"    # postgres 参数
+# target_session_attrs = "read-write"   # postgres 参数
+
+[redis.default]
+URI = ""
+host = "localhost"
+port = 6379
+username = "myadmin"
+password = "myadmin"
+database = "0"
+min_idle_conns = 5
+max_idle_conns = 20
+max_open_conns = 10
+max_idle_time = 100
+timeout = 5          # 单位: 秒
+
+[mongodb.default]
+# URI = "mongodb://mongo:xxxxxxxxxxxxxx@210.208.68.80=7384210.208.66.36=7384/dbm?replicaSet=replSet1"
+URI = ""
+host = "localhost"
+port = 27017
+username = "myadmin"
+password = "myadmin"
+auth_db = "admin"
+database = "db01"
+replset = ""
+execWaitTimeoutMS = 60000
+connectTimeoutMS = 5000
+socketTimeoutMS = 5000
+serverSelectionTimeoutMS = 5000
+connect = ""
+ReadPreference = ""             # 可选值: Primary(为空时默认), PrimaryPreferred, SecondaryPreferred, Secondary, Nearest
+
+[S3.default]
+EndPoint = "http://127.0.0.0.1:8080"
+AccessKey = "xxxxxxxxx"
+SecretKey = "xxxxxxxxxxxxxxxxxxx"
+DisableSSL = true
+
+[httpapi.promtheus]
+address = "http://127.0.0.1:3000"
+timeout = 8
+username = "user001"
+password = "pass001"
+
+[httpapi.zabbix]
+address = "http://127.0.0.1:5000"
+timeout = 10
+username = "user001"
+password = "pass001"

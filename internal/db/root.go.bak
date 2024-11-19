@@ -1,0 +1,170 @@
+/*
+ * @Author: Liu Sainan
+ * @Date: 2023-12-10 01:48:46
+ */
+
+package db
+
+import (
+	"myadmin/internal/config"
+	"sync"
+
+	"go.uber.org/zap"
+	"gorm.io/gorm"
+)
+
+// 没必要用 sync.Map , 直接使用 map[string]
+var (
+	DBMap      = sync.Map{}
+	RedisMap   = sync.Map{}
+	MongoDBMap = sync.Map{}
+	S3CephMap  = sync.Map{}
+)
+
+type DBClient interface {
+	Raw(sql string, values ...interface{}) (tx *gorm.DB)
+	Exec(sql string, values ...interface{}) (tx *gorm.DB)
+}
+
+func DB(names ...string) DBClient {
+	name := "default"
+	if len(names) > 0 {
+		name = names[0]
+	}
+
+	if client, ok := DBMap.Load(name); ok {
+		return client.(DBClient)
+	}
+
+	CreateDBClient(name, config.GlobalConfig.DB[name])
+
+	client, ok := DBMap.Load(name)
+	if !ok {
+		zap.L().Fatal("get mysql client error")
+	}
+	return client.(DBClient)
+}
+
+func Redis(names ...string) *RedisClient {
+	name := "default"
+	if len(names) > 0 {
+		name = names[0]
+	}
+
+	if client, ok := DBMap.Load(name); ok {
+		return client.(*RedisClient)
+	}
+
+	CreateRedisClient(name, config.GlobalConfig.Redis[name])
+
+	client, ok := DBMap.Load(name)
+	if !ok {
+		zap.L().Fatal("get redis client error")
+	}
+	return client.(*RedisClient)
+}
+
+func MongoDB(names ...string) *MongoDBClient {
+	name := "default"
+	if len(names) > 0 {
+		name = names[0]
+	}
+
+	if client, ok := DBMap.Load(name); ok {
+		return client.(*MongoDBClient)
+	}
+
+	CreateMongoDBClient(name, config.GlobalConfig.Mongo[name])
+
+	client, ok := DBMap.Load(name)
+	if !ok {
+		zap.L().Fatal("get mongodb client error")
+	}
+	return client.(*MongoDBClient)
+}
+
+func S3(names ...string) *S3Ceph {
+	name := "default"
+	if len(names) > 0 {
+		name = names[0]
+	}
+
+	if client, ok := DBMap.Load(name); ok {
+		return client.(*S3Ceph)
+	}
+
+	CreateS3Client(name, config.GlobalConfig.S3[name])
+
+	client, ok := DBMap.Load(name)
+	if !ok {
+		zap.L().Fatal("get mysql client error")
+	}
+	return client.(*S3Ceph)
+}
+
+func Setup() {
+	for key, config := range config.GlobalConfig.DB {
+		CreateDBClient(key, config)
+	}
+	for key, config := range config.GlobalConfig.Redis {
+		CreateRedisClient(key, config)
+	}
+	for key, config := range config.GlobalConfig.Mongo {
+		CreateMongoDBClient(key, config)
+	}
+	for key, config := range config.GlobalConfig.S3 {
+		CreateS3Client(key, config)
+	}
+}
+
+func CreateDBClient(name string, config *config.DBConfig) {
+
+	var client DBClient
+	var err error
+
+	switch config.Dialect {
+	case "mysql":
+		client, err = NewMysqlClient(config)
+	case "postgres":
+		client, err = NewPGSqlClient(config)
+	}
+
+	if err != nil {
+		zap.L().Fatal("connect mysql error", zap.String("error", err.Error()))
+	}
+
+	if client != nil {
+		DBMap.Store(name, client)
+	}
+}
+
+func CreateMongoDBClient(name string, config *config.MongoConfig) {
+
+	client, err := NewMongoDBClient(config)
+	if err != nil {
+		zap.L().Fatal("connect mongoclient error", zap.String("error", err.Error()))
+	}
+	if client != nil {
+		MongoDBMap.Store(name, client)
+	}
+}
+
+func CreateRedisClient(name string, config *config.RedisConfig) {
+	client, err := NewRedisClient(config)
+	if err != nil {
+		zap.L().Fatal("connect redis error", zap.String("error", err.Error()))
+	}
+	if client != nil {
+		RedisMap.Store(name, client)
+	}
+}
+
+func CreateS3Client(name string, config *config.S3Config) {
+	client, err := NewS3Ceph(config)
+	if err != nil {
+		zap.L().Fatal("connect s3Ceph error", zap.String("error", err.Error()))
+	}
+	if client != nil {
+		S3CephMap.Store(name, client)
+	}
+}

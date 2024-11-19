@@ -1,0 +1,52 @@
+/*
+ * @Author: Liu Sainan
+ * @Date: 2024-01-06 23:28:41
+ */
+
+package controller
+
+import (
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+)
+
+type ResponseBody struct {
+	Code    int         `json:"code"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data"`
+}
+
+type Context struct {
+	*gin.Context
+}
+
+func (c *Context) SendOK(resp any) {
+	c.JSON(
+		http.StatusOK,
+		ResponseBody{
+			Code:    http.StatusOK,
+			Message: "",
+			Data:    resp,
+		})
+}
+
+func (c *Context) SendErr(message string) {
+	c.JSON(
+		http.StatusInternalServerError,
+		ResponseBody{
+			Code:    http.StatusInternalServerError,
+			Message: message,
+			Data:    "",
+		})
+}
+
+func (c *Context) SendError(err error) {
+	c.JSON(
+		http.StatusInternalServerError,
+		ResponseBody{
+			Code:    http.StatusInternalServerError,
+			Message: err.Error(),
+			Data:    "",
+		})
+}

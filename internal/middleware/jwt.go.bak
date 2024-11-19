@@ -1,0 +1,217 @@
+/*
+ * @Author: Liu Sainan
+ * @Date: 2024-01-01 15:23:13
+ */
+
+package middleware
+
+import (
+	"encoding/json"
+	"fmt"
+	"myadmin/internal/config"
+	"myadmin/internal/dto"
+	"myadmin/internal/service/userservice"
+	"net/http"
+	"path/filepath"
+	"time"
+
+	jwt "github.com/appleboy/gin-jwt/v2"
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
+)
+
+// var JWTAuth *jwt.GinJWTMiddleware
+
+// TokenLookup: "header: Authorization, cookie: MYADMIN-X-TOKEN, query: MYADMIN-X-TOKEN"
+
+// func NewJwt() error {
+// 	JWTAuth = &jwt.GinJWTMiddleware{
+// 		TimeFunc:         time.Now,                                                                                                                            // 测试或服务器在其他时区可设置该属性。 对测试时区有用
+// 		Realm:            "myadmin gin jwt",                                                                                                                   // jwt 实例名称
+// 		SigningAlgorithm: "HS256",                                                                                                                             // 签名加密算法，默认值为HS256
+// 		TokenLookup:      fmt.Sprintf("header: Authorization, cookie: %s, query: %s", config.GlobalConfig.Auth.TokenName, config.GlobalConfig.Auth.TokenName), // 如果使用 header 方式, 则会找请求头为 Authorization 的值前缀为 TokenHeadName 的部分, 如果使用 cookie 方式, 则直接找名为 MYADMIN-X-TOKEN 的 cookie
+// 		// TokenLookup:     "header:Authorization",                                            // 如果使用 header 方式, 则会找请求头为 Authorization 的值前缀为 TokenHeadName 的部分, 如果使用 cookie 方式, 则直接找名为 MYADMIN-X-TOKEN 的 cookie
+// 		TokenHeadName:   config.GlobalConfig.Auth.TokenName,                                // 只有在 TokenLookup 时使用 请求头 header 方式, 这个值才有用
+// 		CookieName:      config.GlobalConfig.Auth.TokenName,                                // 要与 TokenLookup 中指定的 cookie: MYADMIN-X-TOKEN 一致
+// 		Key:             []byte(config.GlobalConfig.Auth.TokenSecret),                      // 密钥，不能泄露
+// 		Timeout:         time.Duration(config.GlobalConfig.Auth.TokenMaxAge) * time.Second, // TOKEN 过期时间，默认: time.Hour
+// 		MaxRefresh:      time.Duration(config.GlobalConfig.Auth.TokenMaxAge) * time.Second, // 刷新最大延长时间，默认: time.Hour
+// 		IdentityKey:     config.GinCtxUserKey,                                              // 会执行: c.Set(IdentityKey, "token 解析出来的数据")
+// 		SendCookie:      true,
+// 		PayloadFunc:     PayloadFunc,
+// 		IdentityHandler: IdentityHandler,
+// 		Authenticator:   Authenticator,
+// 		Authorizator:    Authorizator,
+// 		Unauthorized:    Unauthorized,
+// 		LoginResponse:   LoginResponse, // 完成登录后返回的信息，默认只返回: 状态码, token, 过期时间。用户可自定义返回数据
+// 		RefreshResponse: LoginResponse, // 刷新返回，和登录返回一样
+// 		LogoutResponse:  LogoutResponse,
+// 	}
+
+// 	if err := JWTAuth.MiddlewareInit(); err != nil {
+// 		return err
+// 	}
+
+// 	return nil
+// }
+
+// PayloadFunc 给生成的 token 添加额外的数据. 返回一个 map 类型
+func PayloadFunc(data any) jwt.MapClaims {
+	return jwt.MapClaims{"uid": data}
+}
+
+// IdentityHandler 设置身份处理函数。 即真正的中间件。登录成功后, 判断用户身份以及行为啥的。然后确定是否有权限继续
+// 如果有黑名单, IP限制等等, 都需要在这里实现
+func IdentityHandler(c *gin.Context) any {
+
+	var uid uint
+
+	var err error
+	claims := jwt.ExtractClaims(c)
+
+	if uid, err = GetUidFromAny(claims["uid"]); err != nil {
+		c.JSON(401, gin.H{"code": 401, "message": err.Error()})
+		c.Abort()
+		return nil
+	}
+
+	userService := userservice.NewUserService()
+	user, err := userService.GetSession(uid)
+	if err != nil {
+		c.JSON(401, gin.H{"code": 401, "message": "未找到 session 信息, 请重新登录"})
+		c.Abort()
+		return nil
+	}
+
+	// 退出请求不刷新 session 和 cookie, 并且
+
+	// c.FullPath() 和 c.Request.URL.Path 区别
+
+	// 以下几种情况无区别, 都是返回 /ping
+	// r.GET("/ping", func(c *gin.Context))
+	// curl http://127.0.0.1:8080/ping
+	// curl http://127.0.0.1:8080/ping?name=123
+
+	// c.FullPath() 		返回: /ping
+	// c.Request.URL.Path 	返回: /ping
+
+	// 以下情况有区别
+	// r.GET("/user/:name", func(c *gin.Context))
+	// curl http://127.0.0.1:8080/user/myname001
+
+	// c.FullPath() 		返回: /user/:name
+	// c.Request.URL.Path 	返回: /user/myname001
+
+	if c.FullPath() == filepath.Join(config.GlobalConfig.Server.ApiUrlPrefix, "auth", "user", "logout") {
+		if err = userService.DelSession(uid); err != nil {
+			zap.L().Warn("logout delete session faild", zap.String("error", err.Error()))
+		}
+		return user
+	}
+
+	// 当前 token 的剩余过期时间大于设置的 token 保留总时长的一半, 则不刷新 token
+	// exp, err := GetExpFromAny(claims["exp"])
+	// if err != nil {
+	// 	zap.L().Warn("获取过期时间失败", zap.String("error", err.Error()))
+	// 	return user
+	// }
+
+	// if exp-time.Now().Unix() > int64(config.GlobalConfig.Auth.TokenMaxAge/2) {
+	// 	return user
+	// }
+
+	if err := userService.SetSession(&user); err != nil {
+		c.JSON(401, gin.H{"code": 401, "message": "未找到 session 信息, 请重新登录"})
+		c.Abort()
+		return nil
+	}
+
+	if _, _, err := JWTAuth.RefreshToken(c); err != nil {
+		zap.L().Warn("RefreshToken", zap.String("error", err.Error()))
+	}
+
+	return user
+}
+
+// Authenticator 进行身份验证的逻辑, 认证成功则返回用户信息, 失败则返回 error
+func Authenticator(c *gin.Context) (any, error) {
+
+	var req dto.UserLoginReq
+
+	if err := c.ShouldBind(&req); err != nil {
+		return "", jwt.ErrMissingLoginValues
+	}
+
+	userService := userservice.NewUserService()
+	user, err := userService.Login(req)
+	return user.ID, err
+}
+
+// Authorizator 用户 Token 验证成功后, 执行的回调函数。 这里可以判断用户是否有权限继续访问该路径, 没有权限则返回 false
+func Authorizator(data any, c *gin.Context) bool {
+	// data 是上面 IdentityHandler 函数 return 的数据, 这个数据同时也设置到了 gin.Context 里的 IdentityKey
+	return true
+}
+
+// Unauthorized 定义未授权功能。即如果用户认证失败后如何处理请求
+func Unauthorized(c *gin.Context, code int, message string) {
+	c.JSON(code, gin.H{"code": code, "message": message})
+}
+
+// LoginResponse 登录成功后的返回信息
+func LoginResponse(c *gin.Context, code int, token string, expire time.Time) {
+	c.JSON(http.StatusOK, gin.H{
+		"code":    http.StatusOK,
+		"message": "",
+		"data": gin.H{
+			"token":  token,
+			"expire": expire.Format(time.RFC3339),
+		},
+	})
+}
+
+// LogoutResponse 退出操作
+func LogoutResponse(c *gin.Context, code int) {
+
+	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "message": ""})
+}
+
+func GetUidFromAny(id any) (uint, error) {
+
+	var uid uint
+
+	switch v := id.(type) {
+	case int:
+		uid = uint(v)
+	case int8:
+		uid = uint(v)
+	case int16:
+		uid = uint(v)
+	case int32:
+		uid = uint(v)
+	case int64:
+		uid = uint(v)
+	case float32:
+		uid = uint(v)
+	case float64:
+		uid = uint(v)
+	default:
+		return 0, fmt.Errorf("uid 解析失败")
+	}
+
+	return uid, nil
+}
+
+func GetExpFromAny(exp any) (int64, error) {
+
+	switch v := exp.(type) {
+	case nil:
+		return 0, fmt.Errorf("过期时间为空")
+	case float64:
+		return int64(v), nil
+	case json.Number:
+		return v.Int64()
+	default:
+		return 0, fmt.Errorf("解析过期时间失败")
+	}
+}
